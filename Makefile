@@ -2,12 +2,12 @@
 # Date created:				Sat Sep 29 05:19:31 PDT 2007
 # Whom:					Matt Peterson <matt@peterson.org>
 #
-# $FreeBSD: ports/net-mgmt/collectd5/Makefile,v 1.39 2012/04/12 05:56:09 dhn Exp $
+# $FreeBSD: ports/net-mgmt/collectd5/Makefile,v 1.42 2012/06/01 05:23:14 dinoex Exp $
 #
 
 PORTNAME=	collectd
 PORTVERSION=	5.1.0
-PORTREVISION=	1
+PORTREVISION=	2
 CATEGORIES=	net-mgmt
 MASTER_SITES=	http://collectd.org/files/
 
@@ -43,14 +43,14 @@ OPTIONS=	CGI		"Install collection.cgi (requires RRDTOOL)" 	Off \
 		PGSQL		"Input: PostgreSQL" 				Off \
 		PING		"Input: Network latency (liboping)" 		On  \
 		PYTHON		"Input: Python plugin"				Off \
-		REDIS		"Input: Redis plugin"			Off \
+		REDIS		"Input: Redis plugin"				Off \
 		ROUTEROS	"Input: RouterOS plugin"			Off \
 		SNMP		"Input: SNMP" 					On  \
 		TOKYOTYRANT	"Input: Tokyotyrant database"			Off \
 		XMMS		"Input: XMMS" 					Off \
 		RRDTOOL		"Output: RRDTool"				On  \
-		RRDCACHED	"Output: RRDTool Cached (require RRDTOOL)"	On \
-		WRITE_CARBON	"Output: Write Carbon"	Off 
+		RRDCACHED	"Output: RRDTool Cached (require RRDTOOL)"	On  \
+		WRITE_CARBON	"Output: Write Carbon"				Off 
 
 MAN1=		collectd.1 collectd-nagios.1 collectdmon.1 collectdctl.1
 MAN5=		collectd.conf.5 collectd-email.5 collectd-exec.5 \
@@ -134,6 +134,7 @@ CONFIGURE_ARGS=	--localstatedir=/var \
 		--without-librabbitmq \
 		--disable-varnish \
 		--without-libvarnish \
+		--without-libcredis \
 		--without-libganglia \
 		--without-libupsclient \
 		--without-libesmtp \
@@ -411,8 +412,12 @@ CONFIGURE_ARGS+=--disable-write_carbon
 PLIST_SUB+=	WRITE_CARBON="@comment "
 .endif
 
+AUTOTOOLSFILES=	aclocal.m4
 
 post-patch:
+	@${REINPLACE_CMD} -e 's|1.11.1|%%AUTOMAKE_APIVER%%|g' \
+			  -e 's|2.67|%%AUTOCONF_VERSION%%|g' \
+			  ${WRKSRC}/aclocal.m4
 	@${REINPLACE_CMD} \
 		-e 's;@prefix@/var/;/var/;' \
 		-e 's;/var/lib/;/var/db/;' \
