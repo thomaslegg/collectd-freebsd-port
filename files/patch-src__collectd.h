@@ -1,6 +1,6 @@
---- ./src/collectd.h.orig	2013-04-09 09:13:34.000000000 +0800
-+++ ./src/collectd.h	2013-04-28 16:13:09.000000000 +0800
-@@ -235,7 +235,7 @@
+--- ./src/collectd.h.orig	2013-04-09 23:18:59.000000000 +0800
++++ ./src/collectd.h	2013-08-09 10:53:23.000000000 +0800
+@@ -235,15 +235,15 @@
  #endif
  
  #ifndef LOCALSTATEDIR
@@ -9,7 +9,8 @@
  #endif
  
  #ifndef PKGLOCALSTATEDIR
-@@ -243,7 +243,7 @@
+-#define PKGLOCALSTATEDIR PREFIX "/var/lib/" PACKAGE_NAME
++#define PKGLOCALSTATEDIR PREFIX "/var/db/" PACKAGE_NAME
  #endif
  
  #ifndef PIDFILE
