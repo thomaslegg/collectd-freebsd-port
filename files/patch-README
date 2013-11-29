@@ -1,0 +1,15 @@
+--- ./README.orig	2013-08-18 18:24:25.045972000 +0800
++++ ./README	2013-11-29 18:23:48.000000000 +0800
+@@ -585,9 +585,9 @@
+   * libclntsh (optional)
+     Used by the `oracle' plugin.
+ 
+-  * libcredis (optional)
+-    Used by the redis plugin. Please note that you require a 0.2.2 version
+-    or higher. <http://code.google.com/p/credis/>
++  * libhiredis (optional)
++    Used by the redis plugin. Please note that you require a 0.10.0 version
++    or higher. <https://github.com/redis/hiredis>
+ 
+   * libcurl (optional)
+     If you want to use the `apache', `ascent', `curl', `nginx', or `write_http'

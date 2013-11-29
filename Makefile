@@ -1,24 +1,28 @@
 # Created by: Matt Peterson <matt@peterson.org>
-# $FreeBSD: net-mgmt/collectd5/Makefile 324229 2013-08-04 13:05:44Z wg $
+# $FreeBSD: net-mgmt/collectd5/Makefile 329249 2013-10-03 23:37:48Z wg $
 
 PORTNAME=	collectd
-PORTVERSION=	5.3.0
-PORTREVISION=	4
+PORTVERSION=	5.4.0
+PORTREVISION=	1
+PKGNAMESUFFIX=	5
 CATEGORIES=	net-mgmt
 MASTER_SITES=	http://collectd.org/files/
 
 MAINTAINER=	ports@bsdserwis.com
 COMMENT=	Systems & network statistics collection daemon
 
-USES=		gmake
+USES=		gmake pkgconfig
 USE_BZIP2=	yes
 GNU_CONFIGURE=	yes
-USE_AUTOTOOLS=	autoconf autoheader automake libltdl
+USE_AUTOTOOLS=	aclocal autoconf autoheader automake libltdl libtool
+USE_GNOME=	glib20
 
-NO_STAGE=	yes
-LATEST_LINK=	collectd5
-
-OPTIONS_DEFINE=		CGI CURL DEBUG DBI GCRYPT JSON MEMCACHEC MODBUS MYSQL NOTIFYEMAIL NUTUPS PGSQL PING PYTHON REDIS ROUTEROS RRDTOOL SNMP STATGRAB TOKYOTYRANT VIRT XML XMMS
+OPTIONS_DEFINE=		CGI DEBUG GCRYPT VIRT
+OPTIONS_GROUP=		INPUT OUTPUT
+OPTIONS_GROUP_OUTPUT=	RRDTOOL NOTIFYEMAIL NOTIFYDESKTOP
+OPTIONS_GROUP_INPUT=	CURL DBI JSON MEMCACHEC MODBUS MYSQL \
+			NUTUPS PGSQL PING PYTHON RABBITMQ REDIS \
+			ROUTEROS SNMP STATGRAB TOKYOTYRANT XML XMMS
 
 CGI_DESC=		Install collection.cgi (requires rrdtool)
 CURL_DESC=		Enable curl-based plugins (apache, nginx, etc)
@@ -29,10 +33,13 @@ JSON_DESC=		Enable JSON plugins
 MEMCACHEC_DESC=		Enable memcachec plugin
 MODBUS_DESC=		Enable modbus plugin
 MYSQL_DESC=		Enable mysql-based plugins
+NOTIFYEMAIL_DESC=	Enable notifications via email
+NOTIFYDESKTOP_DESC=	Enable desktop notifications
 NUTUPS_DESC=		Enable nut (ups) plugin
 PGSQL_DESC=		Enable postgresql-based plugins
 PING_DESC=		Enable ping plugin
 PYTHON_DESC=		Enable python-based plugins
+RABBITMQ_DESC=		Enable rabbitmq-based plugins
 REDIS_DESC=		Enable redis-based plugins
 ROUTEROS_DESC=		Enable routeros plugin
 RRDTOOL_DESC=		Enable rrdtool plugin (also rrdcached plugin)
@@ -43,10 +50,6 @@ VIRT_DESC=		Enable libvirt plugin (requires XML)
 XML_DESC=		Enable XML plugins
 XMMS_DESC=		Enable xmms plugin
 
-MAN1=		collectd.1 collectd-nagios.1 collectd-tg.1 collectdmon.1 collectdctl.1
-MAN5=		collectd.conf.5 collectd-email.5 collectd-exec.5 \
-		collectd-snmp.5 collectd-unixsock.5 collectd-perl.5 \
-		collectd-java.5 collectd-python.5 types.db.5 collectd-threshold.5
 USE_RC_SUBR=	collectd collectdmon
 
 USE_LDCONFIG=	yes
@@ -64,42 +67,22 @@ CONFIGURE_ARGS=	--localstatedir=/var \
 		--disable-getifaddrs \
 		--disable-static \
 		--without-java \
-		--without-libcredis \
-		--without-libcurl \
-		--without-libdbi \
-		--without-libesmtp \
 		--without-libganglia \
-		--without-libgcrypt \
 		--without-libiptc \
 		--without-libjvm \
 		--without-libkstat \
-		--without-libmemcached \
 		--without-libmodbus \
 		--without-libmongoc \
-		--without-libmysql \
 		--without-libnetlink \
 		--without-libnetapp \
-		--without-libnetsnmp \
-		--without-libnotify \
 		--without-libopenipmi \
-		--without-liboping \
 		--without-libowcapi \
 		--without-libperfstat \
 		--without-libperl \
-		--without-libpq \
-		--without-librabbitmq \
-		--without-librouteros \
-		--without-librrd \
 		--without-libsensors \
-		--without-libstatgrab \
-		--without-libtokyotyrant \
-		--without-libupsclient \
 		--without-libvarnish \
-		--without-libvirt \
-		--without-libxmms \
-		--without-libyajl \
 		--without-oracle \
-		--without-perl-bindings \
+		--without-perl-bindings
 
 # NOTE: Plugins without external dependencies
 CONFIGURE_ARGS+=	\
@@ -129,6 +112,7 @@ CONFIGURE_ARGS+=	\
 		--enable-powerdns \
 		--enable-pf \
 		--enable-processes \
+		--enable-statsd \
 		--enable-swap \
 		--enable-syslog \
 		--enable-table \
@@ -144,7 +128,6 @@ CONFIGURE_ARGS+=	\
 		--enable-threshold \
 		--enable-unixsock \
 		--enable-uptime \
-		--enable-users \
 		--enable-uuid \
 		--enable-write_graphite \
 		--enable-zfs_arc
@@ -171,6 +154,11 @@ CONFIGURE_ARGS+=--with-libcurl=${LOCALBASE} \
 		--enable-write_http
 PLIST_SUB+=	CURL=""
 .else
+CONFIGURE_ARGS+=--without-libcurl \
+		--disable-apache \
+		--disable-curl \
+		--disable-nginx \
+		--disable-write_http
 PLIST_SUB+=	CURL="@comment "
 .endif
 
@@ -178,21 +166,28 @@ PLIST_SUB+=	CURL="@comment "
 CONFIGURE_ARGS+=--enable-curl_json
 PLIST_SUB+=	CURL_JSON=""
 .else
+CONFIGURE_ARGS+=--disable-curl_json
 PLIST_SUB+=	CURL_JSON="@comment "
 .endif
 
 .if ${PORT_OPTIONS:MCURL} && ${PORT_OPTIONS:MXML}
+#CONFIGURE_ARGS+=	\
+#		--enable-ascent \
+#		--enable-bind \
+#		--enable-curl_xml
+#PLIST_SUB+=	CURL_XML=""
+#.else
 CONFIGURE_ARGS+=	\
-		--enable-ascent \
-		--enable-bind \
-		--enable-curl_xml
-PLIST_SUB+=	CURL_XML=""
-.else
+		--disable-ascent \
+		--disable-bind \
+		--disable-curl_xml
 PLIST_SUB+=	CURL_XML="@comment "
 .endif
 
 .if ${PORT_OPTIONS:MDEBUG}
 CONFIGURE_ARGS+=--enable-debug
+.else
+CONFIGURE_ARGS+=--disable-debug
 .endif
 
 .if ${PORT_OPTIONS:MDBI}
@@ -200,6 +195,7 @@ LIB_DEPENDS+=	dbi:${PORTSDIR}/databases/libdbi
 CONFIGURE_ARGS+=--with-libdbi=${LOCALBASE} --enable-dbi
 PLIST_SUB+=	DBI=""
 .else
+CONFIGURE_ARGS+=--without-libdbi --disable-dbi
 PLIST_SUB+=	DBI="@comment "
 .endif
 
@@ -207,11 +203,15 @@ PLIST_SUB+=	DBI="@comment "
 LIB_DEPENDS+=	gcrypt:${PORTSDIR}/security/libgcrypt
 CONFIGURE_ARGS+=--with-libgcrypt=${LOCALBASE}
 LDFLAGS+=	-lgcrypt
+.else
+CONFIGURE_ARGS+=--without-libgcrypt
 .endif
 
 .if ${PORT_OPTIONS:MJSON}
 LIB_DEPENDS+=	yajl:${PORTSDIR}/devel/yajl
 CONFIGURE_ARGS+=--with-libyajl=${LOCALBASE}
+.else
+CONFIGURE_ARGS+=--without-libyajl
 .endif
 
 .if ${PORT_OPTIONS:MMEMCACHEC}
@@ -219,6 +219,7 @@ LIB_DEPENDS+=	memcached:${PORTSDIR}/databases/libmemcached
 CONFIGURE_ARGS+=--with-libmemcached=${LOCALBASE} --enable-memcachec
 PLIST_SUB+=	MEMCACHEC=""
 .else
+CONFIGURE_ARGS+=--without-libmemcached
 PLIST_SUB+=	MEMCACHEC="@comment "
 .endif
 
@@ -235,17 +236,27 @@ USE_MYSQL=	yes
 CONFIGURE_ARGS+=--with-libmysql=${LOCALBASE} --enable-mysql
 PLIST_SUB+=	MYSQL=""
 .else
+CONFIGURE_ARGS+=--without-libmysql --disable-mysql
 PLIST_SUB+=	MYSQL="@comment "
+.endif
+
+.if ${PORT_OPTIONS:MNOTIFYDESKTOP}
+LIB_DEPENDS+=	notify:${PORTSDIR}/devel/libnotify
+CONFIGURE_ARGS+=--with-libnotify=${LOCALBASE} \
+		--enable-notify_desktop
+PLIST_SUB+=	NOTIFYDESKTOP=""
+.else
+CONFIGURE_ARGS+=--without-libnotify --disable-notify_desktop
+PLIST_SUB+=	NOTIFYDESKTOP="@comment "
 .endif
 
 .if ${PORT_OPTIONS:MNOTIFYEMAIL}
 LIB_DEPENDS+=	esmtp:${PORTSDIR}/mail/libesmtp
-LIB_DEPENDS+=	notify:${PORTSDIR}/devel/libnotify
 CONFIGURE_ARGS+=--with-libesmtp=${LOCALBASE} \
-		--with-libnotify=${LOCALBASE} \
 		--enable-notify_email
 PLIST_SUB+=	NOTIFYEMAIL=""
 .else
+CONFIGURE_ARGS+=--without-libesmtp --disable-notify_email
 PLIST_SUB+=	NOTIFYEMAIL="@comment "
 .endif
 
@@ -254,6 +265,7 @@ LIB_DEPENDS+=	upsclient:${PORTSDIR}/sysutils/nut
 CONFIGURE_ARGS+=--with-upsclient=${LOCALBASE} --enable-nut
 PLIST_SUB+=	NUTUPS=""
 .else
+CONFIGURE_ARGS+=--without-libupsclient --disable-nut
 PLIST_SUB+=	NUTUPS="@comment "
 .endif
 
@@ -262,6 +274,7 @@ USE_PGSQL=	yes
 CONFIGURE_ARGS+=--with-postgresql=${LOCALBASE} --enable-postgresql --with-libpq
 PLIST_SUB+=	PGSQL=""
 .else
+CONFIGURE_ARGS+=--without-postgresql --disable-postgresql --without-libpq
 PLIST_SUB+=	PGSQL="@comment "
 .endif
 
@@ -270,6 +283,7 @@ LIB_DEPENDS+=	oping:${PORTSDIR}/net/liboping
 CONFIGURE_ARGS+=--with-liboping=${LOCALBASE} --enable-ping
 PLIST_SUB+=	PING=""
 .else
+CONFIGURE_ARGS+=--without-liboping --disable-ping
 PLIST_SUB+=	PING="@comment "
 .endif
 
@@ -278,16 +292,31 @@ USE_PYTHON=	yes
 CONFIGURE_ARGS+=--with-python=${PYTHON_CMD} --enable-python
 PLIST_SUB+=	PYTHON=""
 .else
-CONFIGURE_ARGS+=--without-python
+CONFIGURE_ARGS+=--without-python --disable-python
 PLIST_SUB+=	PYTHON="@comment "
 .endif
+
+.if ${PORT_OPTIONS:MRABBITMQ}
+LIB_DEPENDS+=	rabbitmq:${PORTSDIR}/net/rabbitmq-c
+CONFIGURE_ARGS+=--with-librabbitmq=${LOCALBASE} \
+		--enable-rabbitmq
+PLIST_SUB+=	RABBITMQ=""
+.else
+CONFIGURE_ARGS+=--without-librabbitmq \
+		--disable-rabbitmq
+PLIST_SUB+=	RABBITMQ="@comment "
+.endif
+
 .if ${PORT_OPTIONS:MREDIS}
-LIB_DEPENDS+=	credis:${PORTSDIR}/databases/credis
-CONFIGURE_ARGS+=--with-libcredis=${LOCALBASE} \
+LIB_DEPENDS+=	hiredis:${PORTSDIR}/databases/hiredis
+CONFIGURE_ARGS+=--with-libhiredis=${LOCALBASE} \
 		--enable-redis \
 		--enable-write_redis
 PLIST_SUB+=	REDIS=""
 .else
+CONFIGURE_ARGS+=--without-libhiredis \
+		--disable-redis \
+		--disable-write_redis
 PLIST_SUB+=	REDIS="@comment "
 .endif
 
@@ -296,6 +325,7 @@ LIB_DEPENDS+=	routeros:${PORTSDIR}/net/librouteros
 CONFIGURE_ARGS+=--with-librouteros=${LOCALBASE} --enable-routeros
 PLIST_SUB+=	ROUTEROS=""
 .else
+CONFIGURE_ARGS+=--without-librouteros --disable-routeros
 PLIST_SUB+=	ROUTEROS="@comment "
 .endif
 
@@ -306,6 +336,9 @@ CONFIGURE_ARGS+=--with-librrd=${LOCALBASE} \
 		--enable-rrdtool
 PLIST_SUB+=	RRDTOOL=""
 .else
+CONFIGURE_ARGS+=--without-librrd \
+		--disable-rrdcached \
+		--disable-rrdtool
 PLIST_SUB+=	RRDTOOL="@comment "
 .endif
 
@@ -318,7 +351,18 @@ CONFIGURE_ARGS+=--with-libstatgrab=${LOCALBASE} \
 		--enable-interface
 PLIST_SUB+=	STATGRAB=""
 .else
+CONFIGURE_ARGS+=--without-libstatgrab
 PLIST_SUB+=	STATGRAB="@comment "
+.endif
+
+.if ${OSVERSION} >= 900007
+CONFIGURE_ARGS+=--enable-users
+PLIST_SUB+= USERS=""
+.elif ${PORT_OPTIONS:MSTATGRAB}
+CONFIGURE_ARGS+=--enable-users
+PLIST_SUB+= USERS=""
+.else
+PLIST_SUB+= USERS="@comment "
 .endif
 
 .if ${PORT_OPTIONS:MSNMP}
@@ -326,6 +370,7 @@ LIB_DEPENDS+=	netsnmp:${PORTSDIR}/net-mgmt/net-snmp
 CONFIGURE_ARGS+=--with-libnetsnmp --enable-snmp
 PLIST_SUB+=	SNMP=""
 .else
+CONFIGURE_ARGS+=--without-libnetsnmp
 PLIST_SUB+=	SNMP="@comment "
 .endif
 
@@ -334,17 +379,19 @@ LIB_DEPENDS+=	tokyotyrant:${PORTSDIR}/databases/tokyotyrant
 CONFIGURE_ARGS+=--with-libtokyotyrant=${LOCALBASE} --enable-tokyotyrant
 PLIST_SUB+=	TOKYOTYRANT=""
 .else
+CONFIGURE_ARGS+=--without-libtokyotyrant --disable-tokyotyrant
 PLIST_SUB+=	TOKYOTYRANT="@comment "
 .endif
 
 .if ${PORT_OPTIONS:MVIRT}
-LIB_DEPENDS+=	virt.1001:${PORTSDIR}/devel/libvirt
-CONFIGURE_ARGS+=--enable-libvirt
 .if empty(PORT_OPTIONS:MXML)
 IGNORE=		VIRT requires XML. Either select XML or deselect VIRT.
 .endif
+LIB_DEPENDS+=	virt.1001:${PORTSDIR}/devel/libvirt
+CONFIGURE_ARGS+=--enable-libvirt
 PLIST_SUB+=	VIRT=""
 .else
+CONFIGURE_ARGS+=--without-libvirt --disable-libvirt
 PLIST_SUB+=	VIRT="@comment "
 .endif
 
@@ -359,6 +406,7 @@ CONFIGURE_ARGS+=--with-libxmms=${LOCALBASE} --enable-xmms
 CFLAGS+=	`xmms-config --cflags`
 PLIST_SUB+=	XMMS=""
 .else
+CONFIGURE_ARGS+=--without-libxmms --disable-xmms
 PLIST_SUB+=	XMMS="@comment "
 .endif
 
@@ -386,20 +434,12 @@ post-patch:
 		${WRKSRC}/configure.in
 
 post-install:
-	${MKDIR} /var/db/collectd
-	if [ ! -f ${PREFIX}/etc/collectd.conf ]; then \
-		${CP} -p ${PREFIX}/etc/collectd.conf.sample \
-			${PREFIX}/etc/collectd.conf ; \
-	fi
+	@${MKDIR} ${STAGEDIR}/var/db/collectd
 .if ${PORT_OPTIONS:MCGI}
-	${MKDIR} ${WWWDIR}
-	${INSTALL_SCRIPT} ${WRKSRC}/contrib/collection.cgi ${WWWDIR}/
+	@${MKDIR} ${STAGEDIR}${WWWDIR}
+	${INSTALL_SCRIPT} ${WRKSRC}/contrib/collection.cgi ${STAGEDIR}${WWWDIR}/
 	${INSTALL_DATA} ${WRKSRC}/contrib/collection.conf \
-		${WWWDIR}/collection.conf.sample
-	if [ ! -f ${WWWDIR}/collection.conf ]; then \
-		${CP} -p ${WWWDIR}/collection.conf.sample \
-			${WWWDIR}/collection.conf ; \
-	fi
+		${STAGEDIR}${WWWDIR}/collection.conf.sample
 .endif
 
 .include <bsd.port.mk>
