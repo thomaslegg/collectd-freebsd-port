@@ -1,40 +1,13 @@
---- ./configure.in.orig	2013-08-18 18:24:25.049973000 +0800
-+++ ./configure.in	2013-11-29 18:23:48.000000000 +0800
-@@ -110,7 +110,7 @@
- fi
- 
- # Where to install .pc files.
--pkgconfigdir="${libdir}/pkgconfig"
-+pkgconfigdir="${prefix}/libdata/pkgconfig"
- AC_SUBST(pkgconfigdir)
- 
- # Check for standards compliance mode
-@@ -1419,6 +1419,7 @@
- then
- 	AC_CHECK_LIB(kstat, kstat_open, [with_kstat="yes"], [with_kstat="no (libkstat not found)"], [])
- fi
-+
- if test "x$with_kstat" = "xyes"
- then
- 	AC_CHECK_LIB(devinfo, di_init, [with_devinfo="yes"], [with_devinfo="no (not found)"], [])
-@@ -1428,6 +1429,8 @@
- then
- 	AC_DEFINE(HAVE_LIBKSTAT, 1,
- 		  [Define to 1 if you have the 'kstat' library (-lkstat)])
-+	BUILD_WITH_LIBKSTAT_LIBS="-lkstat"
-+	AC_SUBST(BUILD_WITH_LIBKSTAT_LIBS)
- fi
- AM_CONDITIONAL(BUILD_WITH_LIBKSTAT, test "x$with_kstat" = "xyes")
- AM_CONDITIONAL(BUILD_WITH_LIBDEVINFO, test "x$with_devinfo" = "xyes")
-@@ -1537,62 +1540,63 @@
+--- ./configure.ac.orig	2014-05-14 10:25:02.000000000 +0800
++++ ./configure.ac	2014-05-14 10:30:19.000000000 +0800
+@@ -1537,62 +1537,62 @@
  AM_CONDITIONAL(BUILD_WITH_LIBAQUAERO5, test "x$with_libaquaero5" = "xyes")
  # }}}
  
 -# --with-libcredis {{{
 -AC_ARG_WITH(libcredis, [AS_HELP_STRING([--with-libcredis@<:@=PREFIX@:>@], [Path to libcredis.])],
 +# --with-libhiredis {{{
-+AC_ARG_WITH(libhiredis, [AS_HELP_STRING([--with-libhiredis@<:@=PREFIX@:>@],
-+      [Path to libhiredis.])],
++AC_ARG_WITH(libhiredis, [AS_HELP_STRING([--with-libhiredis@<:@=PREFIX@:>@], [Path to libhiredis.])],
  [
   if test "x$withval" = "xyes"
   then
@@ -78,7 +51,7 @@
 -	[with_libcredis="no (credis.h not found)"])
 +	AC_CHECK_HEADERS(hiredis/hiredis.h,
 +	[with_libhiredis="yes"],
-+	[with_libhiredis="no (hiredis.h not found)"])
++	[with_libhiredis="no (hiredis/hiredis.h not found)"])
  fi
 -if test "x$with_libcredis" = "xyes"
 +if test "x$with_libhiredis" = "xyes"
@@ -114,51 +87,11 @@
 +	AC_SUBST(BUILD_WITH_LIBHIREDIS_LDFLAGS)
  fi
 -AM_CONDITIONAL(BUILD_WITH_LIBCREDIS, test "x$with_libcredis" = "xyes")
-+AM_CONDITIONAL(BUILD_WITH_LIBHIREDIS, test "x$with_libhiredis" = "xyes")
++AM_CONDITIONAL(BUILD_WITH_LIBGHIREDIS, test "x$with_libhiredis" = "xyes")
  # }}}
  
  # --with-libcurl {{{
-@@ -1904,12 +1908,6 @@
- 	AC_CHECK_LIB(gcrypt, gcry_md_hash_buffer,
- 		[with_libgcrypt="yes"],
- 		[with_libgcrypt="no (symbol gcry_md_hash_buffer not found)"])
--
--	if test "$with_libgcrypt" != "no"; then
--		AM_PATH_LIBGCRYPT(1:1.2.0,,with_libgcrypt="no (version 1.2.0+ required)")
--		GCRYPT_CPPFLAGS="$LIBGCRYPT_CPPFLAGS $LIBGCRYPT_CFLAGS"
--		GCRYPT_LIBS="$LIBGCRYPT_LIBS"
--	fi
- fi
- 
- CPPFLAGS="$SAVE_CPPFLAGS"
-@@ -3454,7 +3452,7 @@
- if test "x$with_python" = "xyes"
- then
- 	AC_MSG_CHECKING([for Python LIBS])
--	python_library_flags=`echo "import distutils.sysconfig;import sys;sys.stdout.write(distutils.sysconfig.get_config_vars(\"BLDLIBRARY\").__getitem__(0))" | "$with_python_prog" 2>&1`
-+	python_library_flags=`echo "import distutils.sysconfig;import sys;sys.stdout.write(distutils.sysconfig.get_config_var(\"LINKFORSHARED\")+\" -L\"+distutils.sysconfig.get_config_vars(\"LIBDIR\").__getitem__(0)+\" -l\"+distutils.sysconfig.get_config_vars(\"BLDLIBRARY\").__getitem__(0).replace(\"lib\", \"\").replace(\".a\", \"\"))" | "$with_python_prog" 2>&1`
- 	python_config_status=$?
- 
- 	if test "$python_config_status" -ne 0 || test "x$python_library_flags" = "x"
-@@ -3469,7 +3467,7 @@
- if test "x$with_python" = "xyes"
- then
- 	LDFLAGS="-L$python_library_path $LDFLAGS"
--	LIBS="$python_library_flags $LIBS"
-+	LIBS="$python_library_flags $LIBS -lm -lpthread -lutil"
- 
- 	AC_CHECK_FUNC(PyObject_CallFunction,
- 		      [with_python="yes"],
-@@ -4339,7 +4337,7 @@
- 	then
- 		AC_MSG_NOTICE([Not checking for libvarnish: Manually configured])
- 		with_libvarnish_cflags="-I$withval/include"
--		with_libvarnish_libs="-L$withval/lib -lvarnishapi"
-+		with_libvarnish_libs="-L$withval/lib/varnish -lvarnishapi"
- 		with_libvarnish="yes"
- 	fi; fi; fi
- ],
-@@ -5149,7 +5147,7 @@
+@@ -5202,7 +5202,7 @@
  AC_PLUGIN([processes],   [$plugin_processes],  [Process statistics])
  AC_PLUGIN([protocols],   [$plugin_protocols],  [Protocol (IP, TCP, ...) statistics])
  AC_PLUGIN([python],      [$with_python],       [Embed a Python interpreter])
@@ -167,7 +100,7 @@
  AC_PLUGIN([routeros],    [$with_librouteros],  [RouterOS plugin])
  AC_PLUGIN([rrdcached],   [$librrd_rrdc_update], [RRDTool output plugin])
  AC_PLUGIN([rrdtool],     [$with_librrd],       [RRDTool output plugin])
-@@ -5186,7 +5184,7 @@
+@@ -5239,7 +5239,7 @@
  AC_PLUGIN([write_graphite], [yes],             [Graphite / Carbon output plugin])
  AC_PLUGIN([write_http],  [$with_libcurl],      [HTTP output plugin])
  AC_PLUGIN([write_mongodb], [$with_libmongoc],  [MongoDB output plugin])
@@ -176,12 +109,12 @@
  AC_PLUGIN([write_riemann], [$have_protoc_c],   [Riemann output plugin])
  AC_PLUGIN([xmms],        [$with_libxmms],      [XMMS statistics])
  AC_PLUGIN([zfs_arc],     [$plugin_zfs_arc],    [ZFS ARC statistics])
-@@ -5363,7 +5361,7 @@
+@@ -5417,7 +5417,7 @@
      libaquaero5 . . . . . $with_libaquaero5
      libcurl . . . . . . . $with_libcurl
      libdbi  . . . . . . . $with_libdbi
 -    libcredis . . . . . . $with_libcredis
-+    libhiredis  . . . . . $with_libhiredis
++    libhiredis . . . .  . $with_libhiredis
      libesmtp  . . . . . . $with_libesmtp
      libganglia  . . . . . $with_libganglia
      libgcrypt . . . . . . $with_libgcrypt

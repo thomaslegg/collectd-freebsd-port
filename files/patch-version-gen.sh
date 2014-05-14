@@ -1,9 +1,9 @@
---- ./version-gen.sh.orig	2013-04-10 10:14:25.000000000 +0800
-+++ ./version-gen.sh	2013-08-09 10:53:24.000000000 +0800
+--- ./version-gen.sh.orig	2014-01-26 16:09:23.540560000 +0800
++++ ./version-gen.sh	2014-05-14 10:20:52.000000000 +0800
 @@ -1,13 +1,3 @@
 -#!/usr/bin/env bash
 -
--DEFAULT_VERSION="5.3.0.git"
+-DEFAULT_VERSION="5.4.1.git"
 -
 -VERSION="`git describe 2> /dev/null | sed -e 's/^collectd-//'`"
 -
@@ -15,4 +15,4 @@
 +#!/bin/sh
  
 -echo -n "$VERSION"
-+echo -n "5.3.0.git"
++echo -n "5.4.1.git"

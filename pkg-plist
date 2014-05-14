@@ -139,6 +139,9 @@ lib/collectd/pf.la
 lib/collectd/processes.a
 lib/collectd/processes.so
 lib/collectd/processes.la
+%%PYTHON%%lib/collectd/python.a
+%%PYTHON%%lib/collectd/python.la
+%%PYTHON%%lib/collectd/python.so
 %%REDIS%%lib/collectd/redis.a
 %%REDIS%%lib/collectd/redis.so
 %%REDIS%%lib/collectd/redis.la
@@ -151,6 +154,9 @@ lib/collectd/processes.la
 %%RRDTOOL%%lib/collectd/rrdtool.a
 %%RRDTOOL%%lib/collectd/rrdtool.so
 %%RRDTOOL%%lib/collectd/rrdtool.la
+%%SIGROK%%lib/collectd/sigrok.a
+%%SIGROK%%lib/collectd/sigrok.la
+%%SIGROK%%lib/collectd/sigrok.so
 %%SNMP%%lib/collectd/snmp.a
 %%SNMP%%lib/collectd/snmp.so
 %%SNMP%%lib/collectd/snmp.la
@@ -220,9 +226,15 @@ lib/collectd/write_graphite.la
 %%CURL%%lib/collectd/write_http.a
 %%CURL%%lib/collectd/write_http.so
 %%CURL%%lib/collectd/write_http.la
+%%MONGODB%%lib/collectd/write_mongodb.a
+%%MONGODB%%lib/collectd/write_mongodb.so
+%%MONGODB%%lib/collectd/write_mongodb.la
 %%REDIS%%lib/collectd/write_redis.a
 %%REDIS%%lib/collectd/write_redis.so
 %%REDIS%%lib/collectd/write_redis.la
+%%RIEMANN%%lib/collectd/write_riemann.a
+%%RIEMANN%%lib/collectd/write_riemann.so
+%%RIEMANN%%lib/collectd/write_riemann.la
 %%XMMS%%lib/collectd/xmms.a
 %%XMMS%%lib/collectd/xmms.so
 %%XMMS%%lib/collectd/xmms.la
@@ -233,7 +245,6 @@ lib/libcollectdclient.la
 lib/libcollectdclient.a
 lib/libcollectdclient.so
 lib/libcollectdclient.so.1
-libdata/pkgconfig/libcollectdclient.pc
 %%DATADIR%%/postgresql_default.conf
 %%DATADIR%%/types.db
 man/man1/collectd-nagios.1.gz

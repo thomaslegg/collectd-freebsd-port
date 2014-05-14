@@ -1,5 +1,5 @@
---- ./src/Makefile.am.orig	2013-08-18 18:24:25.061973000 +0800
-+++ ./src/Makefile.am	2013-11-29 18:23:48.000000000 +0800
+--- ./src/Makefile.am.orig	2014-01-26 16:09:14.828391000 +0800
++++ ./src/Makefile.am	2014-05-14 10:21:33.000000000 +0800
 @@ -10,7 +10,7 @@
  AM_CPPFLAGS = -DPREFIX='"${prefix}"'
  AM_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
@@ -103,19 +103,6 @@
  endif
  if BUILD_WITH_PERFSTAT
  uptime_la_LIBADD += -lperfstat
-@@ -1400,9 +1400,9 @@
- if BUILD_PLUGIN_WRITE_REDIS
- pkglib_LTLIBRARIES += write_redis.la
- write_redis_la_SOURCES = write_redis.c
--write_redis_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBCREDIS_LDFLAGS)
--write_redis_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBCREDIS_CPPFLAGS)
--write_redis_la_LIBADD = -lcredis
-+write_redis_la_LDFLAGS = -module -avoid-version $(BUILD_WITH_LIBHIREDIS_LDFLAGS)
-+write_redis_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBHIREDIS_CPPFLAGS)
-+write_redis_la_LIBADD = -lhiredis
- collectd_LDADD += "-dlopen" write_redis.la
- collectd_DEPENDENCIES += write_redis.la
- endif
 @@ -1519,12 +1519,7 @@
  
  install-exec-hook:
